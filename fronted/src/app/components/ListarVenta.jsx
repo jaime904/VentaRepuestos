@@ -1,26 +1,33 @@
 
-async function CargarVenta ()
+export async function CargarVenta ()
 {
-    const res = await fetch(`${process.env.BACKEND_URL}/api/venta/`);
+    const res = await fetch(`${process.env.BACKEND_URL}/api/venta/`, {method: "GET"});
+    // const res = await fetch(`127.0.0.1:8000/api/venta/` , {method: "GET"});
     const data = await res.json();
+    console.log(data);
     return data;
 }
 
-async function ListarVenta ()
+export async function ListarVenta ()
 {
     const date = await CargarVenta();
     console.log(date);
     return (
-        <div className="bg-slate-700 p-4 w-full" >
+        <div className="bg-slate-700 px-4 w-full" >
             <h2>lista de RepuestoDisponibles</h2>
-            {date.map((venta) => (
-                <div key={venta._id} className="bg-slate-400 p-2 rounded-md m-2">
-                    <h3>Marca: {venta.marca}</h3>
+            {date.map(venta => (
+                <div key={venta.id} className="bg-slate-500 px-4 py-3 mb-2">
+                    <p>Marca: {venta.marca}</p>
                     <p>Precio: {venta.precio}</p>
                     <p>Modelo: {venta.modelo}</p>
                     <p>Año: {venta.anio}</p>
+                    <div className="flex justify-between gap-x-2">
+                        <button className="bg-blue-500 rounded-md p-2">Editar</button>
+                        <button className="bg-red-500 text-white rounded-md p-2">Eliminar</button>
+                    </div>
                 </div>
             ))}
+
         </div>
     );
 } export default ListarVenta;

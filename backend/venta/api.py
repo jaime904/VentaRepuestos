@@ -11,14 +11,26 @@ class VentaViewSet(viewsets.ModelViewSet):
     serializer_class = VentaSerializer
 
     @action(detail=False, methods=['post'])
-    def create_venta(self, request,):
-        serializer = VentaSerializer(data=request.data)
+    def create_venta(self, request):
+        data_nueva = request.data
+        print("hola")
+        data_nueva['estado'] = True
+        print("hola2")
+        serializer = VentaSerializer(data=data_nueva)
+        print("hola3")
         if serializer.is_valid():
+
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        #return Response({'detail': 'Los datos proporcionados son inválidos.', 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        # return Response({'detail': 'Los datos proporcionados son inválidos.', 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail = False, methods=['get']	)
+    def devolverListado(self, request):
+        queryset = Venta.objects.all()
+        serializer = self.get_serializer(queryset, many = True)
+        print(serializer.data)
+        return Response(serializer.data, status = status.HTTP_200_OK)
+    
 
 #comenta para que sirve este codigo y que hace
 #Este código es un ViewSet que se encarga de manejar las peticiones HTTP de la entidad Venta.

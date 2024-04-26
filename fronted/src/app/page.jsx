@@ -1,6 +1,8 @@
 import ListarVenta from "./components/ListarVenta";
 import FormVenta from "./components/formVenta";
 
+export const  dynamic = "force-dynamic"
+
 
 function HomePage ()
 {

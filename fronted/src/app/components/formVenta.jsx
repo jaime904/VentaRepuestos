@@ -1,5 +1,6 @@
 "use client";
 import {useState} from "react";
+import {useRouter} from "next/navigation";
 
 function formuVenta ()
 {
@@ -7,6 +8,8 @@ function formuVenta ()
     const [precio, setPrecio] = useState("");
     const [modelo, setModelo] = useState("");
     const [anio, setAnio] = useState("");
+    
+    const router = useRouter();
 
     const agregar = async (e) => {
         e.preventDefault();
@@ -25,7 +28,7 @@ function formuVenta ()
             body: JSON.stringify(repuesto),
         })
         const data = await res.json();
-        console.log(data);
+        router.refresh();
     }
 
     return (
@@ -44,7 +47,7 @@ function formuVenta ()
                 <label htmlFor="total">Año</label>
                 <input type="number" id="total" name="total" className="bg-slate-400 rounded-md p-2 mb-2 block"
                      onChange={(e) => setAnio(e.target.value)}/>
-                <button className="text-black " type="submit">Agregar</button>
+                <button  className="text-black " type="submit">Agregar</button>
             </form>
         </div>
     );
