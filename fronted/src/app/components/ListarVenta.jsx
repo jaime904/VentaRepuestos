@@ -2,7 +2,6 @@
 export async function CargarVenta ()
 {
     const res = await fetch(`${process.env.BACKEND_URL}/api/venta/`, {method: "GET"});
-    // const res = await fetch(`127.0.0.1:8000/api/venta/` , {method: "GET"});
     const data = await res.json();
     console.log(data);
     return data;
