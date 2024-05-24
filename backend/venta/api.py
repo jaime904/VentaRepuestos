@@ -31,9 +31,6 @@ class VentaViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['POST'])
     def create_venta_con_boletas(self, request):
-        """
-        Crea una nueva boleta asociada a una venta existente.
-        """
         venta_id = request.data.get('venta')        
         venta = get_object_or_404(Venta, pk=venta_id)
         boletas_data = request.data
@@ -73,11 +70,6 @@ class VentaViewSet(viewsets.ModelViewSet):
             })
         return JsonResponse(data, safe=False)
 
-    @action(detail=True, methods=['get'])
-    def obtener_detalle_venta(self, request, pk=None):
-        venta = self.get_object()
-        serializer = self.get_serializer(venta)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['put', 'patch'])
     def actualizar_venta(self, request, pk=None):
