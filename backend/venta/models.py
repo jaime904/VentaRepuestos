@@ -16,3 +16,6 @@ class Boleta(models.Model):
     fecha = models.DateField(auto_now_add=True)
     cantidad = models.IntegerField()
     total = models.IntegerField()
+
+
+    
