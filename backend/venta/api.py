@@ -2,8 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
-from .models import Venta, Boleta
-from .serializers import VentaSerializer, BoletaSerializer
+from .models import Cliente, Venta, Boleta
+from .serializers import ClienteSerializer, VentaSerializer, BoletaSerializer
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
@@ -12,7 +12,7 @@ class VentaViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     serializer_class = VentaSerializer
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post']) # sirve para crear una venta
     def create_venta(self, request):
         data_nueva = request.data
         data_nueva['estado'] = True
@@ -22,14 +22,14 @@ class VentaViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get']) # sirve para obtener todas las ventas
     def devolverListado(self, request):
         query = Venta.objects.all()
         serializer = VentaSerializer(query, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-    @action(detail=False, methods=['POST'])
+    @action(detail=False, methods=['POST']) # sirve para crear una venta con boletas
     def create_venta_con_boletas(self, request):
         venta_id = request.data.get('venta')        
         venta = get_object_or_404(Venta, pk=venta_id)
@@ -47,11 +47,10 @@ class VentaViewSet(viewsets.ModelViewSet):
                 'boletas': boletas_data
             }, status=status.HTTP_201_CREATED)
         return Response(boletas_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=['get'])
+    
+    @action(detail=False, methods=['get']) # sirve para obtener las boletas con venta
     def obtener_boletas_con_venta(self, request):
-        boletas = Boleta.objects.select_related('venta').all()
-        print(boletas)
+        boletas = Boleta.objects.select_related('venta', 'cliente').all()
         data = []
         for boleta in boletas:
             data.append({
@@ -65,14 +64,23 @@ class VentaViewSet(viewsets.ModelViewSet):
                     'modelo': boleta.venta.modelo,
                     'estado': boleta.venta.estado,
                     'precio': boleta.venta.precio,
-                    'anio': boleta.venta.anio
+                    'anio': boleta.venta.anio,
+                },
+                'cliente': {
+                    'id_cliente': boleta.cliente.id if boleta.cliente else None,
+                    'rut': boleta.cliente.rut if boleta.cliente else None,
+                    'nombre': boleta.cliente.nombre if boleta.cliente else None,
+                    'apellido': boleta.cliente.apellido if boleta.cliente else None,
+                    'telefono': boleta.cliente.telefono if boleta.cliente else None,
+                    'email': boleta.cliente.email if boleta.cliente else None,
+                    'direccion': boleta.cliente.direccion if boleta.cliente else None
                 }
             })
         return JsonResponse(data, safe=False)
 
 
     @action(detail=True, methods=['put', 'patch'])
-    def actualizar_venta(self, request, pk=None):
+    def actualizar_venta(self, request, pk=None): # sirve para modificar una venta
         venta = self.get_object()
         serializer = VentaSerializer(venta, data=request.data, partial=True)
         if serializer.is_valid():
@@ -80,6 +88,19 @@ class VentaViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['post']) # sirve para crear un Cliente
+    def create_cliente(self, request):
+        serializer = ClienteSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get']) # sirve para obtener todos los clientes
+    def devolverListadoClientes(self, request):
+        query = Cliente.objects.all()
+        serializer = ClienteSerializer(query, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     
     def destroy(self, request, *args, **kwargs): # sirve para modificar el estado de la venta y cambiarlo a falso 
