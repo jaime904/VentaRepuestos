@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Venta, Boleta
+from .models import Venta, Boleta, Cliente , despacho
 
 class VentaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -9,4 +9,15 @@ class VentaSerializer(serializers.ModelSerializer):
 class BoletaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Boleta
-        fields = ('id', 'venta', 'fecha', 'cantidad', 'total')
+        fields = ['id', 'venta', 'cliente', 'fecha', 'cantidad', 'total']
+
+class ClienteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cliente
+        fields = ('id', 'rut', 'nombre', 'apellido', 'telefono', 'email', 'direccion')
+
+class DespachoSerializer(serializers.ModelSerializer):  
+    class Meta:
+        model = despacho
+        fields = ('id', 'boleta', 'fecha', 'direccion', 'estado')
+    
