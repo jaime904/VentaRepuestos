@@ -2,8 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
-from .models import Cliente, Venta, Boleta
-from .serializers import ClienteSerializer, VentaSerializer, BoletaSerializer
+from .models import Cliente, Venta, Boleta , despacho
+from .serializers import ClienteSerializer, DespachoSerializer, VentaSerializer, BoletaSerializer
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
@@ -78,7 +78,7 @@ class VentaViewSet(viewsets.ModelViewSet):
             })
         return JsonResponse(data, safe=False)
 
-
+  
     @action(detail=True, methods=['put', 'patch'])
     def actualizar_venta(self, request, pk=None): # sirve para modificar una venta
         venta = self.get_object()
@@ -102,6 +102,25 @@ class VentaViewSet(viewsets.ModelViewSet):
         serializer = ClienteSerializer(query, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+    @action(detail=False, methods=['post'])  # Sirve para crear un despacho
+    def create_despacho(self, request):
+        data = request.data
+        boleta_id = data.get('boleta')
+        boleta = get_object_or_404(Boleta, pk=boleta_id)
+        data['boleta'] = boleta.id  # Asegúrate de enviar el ID de la boleta en la solicitud
+        serializer = DespachoSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'])  # Sirve para obtener los despachos con el ID de la boleta asociada
+    def obtener_despachos_con_boletas(self, request):
+        despachos = despacho.objects.select_related('boleta').all()
+        serializer = DespachoSerializer(despachos, many=True)
+        return Response(serializer.data)
+
+
     
     def destroy(self, request, *args, **kwargs): # sirve para modificar el estado de la venta y cambiarlo a falso 
         try:
