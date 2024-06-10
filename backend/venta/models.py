@@ -7,6 +7,7 @@ class Venta(models.Model):
     marca = models.CharField(max_length=50)
     estado = models.BooleanField(default=True)
     modelo = models.CharField(max_length=50)
+    descripcion = models.CharField(max_length=50)
     precio = models.IntegerField()
     anio = models.IntegerField()
 

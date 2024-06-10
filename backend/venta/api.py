@@ -28,7 +28,6 @@ class VentaViewSet(viewsets.ModelViewSet):
         serializer = VentaSerializer(query, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
     @action(detail=False, methods=['POST']) # sirve para crear una venta con boletas
     def create_venta_con_boletas(self, request):
         venta_id = request.data.get('venta')        
@@ -78,7 +77,6 @@ class VentaViewSet(viewsets.ModelViewSet):
             })
         return JsonResponse(data, safe=False)
 
-  
     @action(detail=True, methods=['put', 'patch'])
     def actualizar_venta(self, request, pk=None): # sirve para modificar una venta
         venta = self.get_object()
@@ -120,8 +118,6 @@ class VentaViewSet(viewsets.ModelViewSet):
         serializer = DespachoSerializer(despachos, many=True)
         return Response(serializer.data)
 
-
-    
     def destroy(self, request, *args, **kwargs): # sirve para modificar el estado de la venta y cambiarlo a falso 
         try:
             instance = self.get_object()

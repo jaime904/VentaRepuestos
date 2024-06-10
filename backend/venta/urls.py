@@ -6,7 +6,6 @@ router = routers.DefaultRouter()
 router.register('api/venta', VentaViewSet, 'venta')
 
 # Registra la acción personalizada obtener_boletas_con_venta
-router.register('api/obtener_boletas_con_venta', VentaViewSet.obtener_boletas_con_venta, 'obtener_boletas_con_venta')
 
 urlpatterns = router.urls
 #comenta para que sirve este codigo y que hace  
