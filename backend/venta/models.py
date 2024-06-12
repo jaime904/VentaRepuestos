@@ -11,6 +11,14 @@ class Venta(models.Model):
     precio = models.IntegerField()
     anio = models.IntegerField()
 
+
+class Vendedor(models.Model):
+    id = models.AutoField(primary_key=True)
+    rut = models.CharField(max_length=50)
+    nombre = models.CharField(max_length=50)
+    apellido = models.CharField(max_length=50)
+
+
 class Cliente(models.Model):
     id = models.AutoField(primary_key=True)
     rut = models.CharField(max_length=50)
@@ -20,7 +28,6 @@ class Cliente(models.Model):
     email = models.EmailField(max_length=50)
     direccion = models.CharField(max_length=50)
 
-
 class Boleta(models.Model):
     id = models.AutoField(primary_key=True)
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE)
@@ -28,6 +35,14 @@ class Boleta(models.Model):
     fecha = models.DateField(auto_now_add=True)
     cantidad = models.IntegerField()
     total = models.IntegerField()
+
+class nota_credito(models.Model):   
+    id = models.AutoField(primary_key=True)
+    boleta = models.ForeignKey(Boleta, on_delete=models.CASCADE)
+    fecha = models.DateField(auto_now_add=True)
+    total = models.IntegerField()
+    cantidad = models.IntegerField()
+    estado = models.BooleanField(default=True)
 
 
 class despacho(models.Model):

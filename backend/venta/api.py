@@ -68,8 +68,8 @@ class VentaViewSet(viewsets.ModelViewSet):
                 'cliente': {
                     'id_cliente': boleta.cliente.id if boleta.cliente else None,
                     'rut': boleta.cliente.rut if boleta.cliente else None,
-                    'nombre': boleta.cliente.nombre if boleta.cliente else None,
-                    'apellido': boleta.cliente.apellido if boleta.cliente else None,
+                    'nombre': boleta.cliente.nombre if boleta.cliente else None, 
+                    'apellido': boleta.cliente.apellido if boleta.cliente else None, 
                     'telefono': boleta.cliente.telefono if boleta.cliente else None,
                     'email': boleta.cliente.email if boleta.cliente else None,
                     'direccion': boleta.cliente.direccion if boleta.cliente else None
