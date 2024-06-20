@@ -22,4 +22,14 @@ class DespachoSerializer(serializers.ModelSerializer):
         fields = ('id', 'boleta', 'fecha', 'direccion', 'estado')
 
 
+class CarritoVentaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CarritoVenta
+        fields = '__all__'
+
+class CarritoSerializer(serializers.ModelSerializer):
+    ventas = CarritoVentaSerializer(many=True, read_only=True, source='carritoventa_set')
     
+    class Meta:
+        model = Carrito
+        fields = '__all__'
