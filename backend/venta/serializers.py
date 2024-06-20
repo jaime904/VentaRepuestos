@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Carrito, CarritoVenta, Venta, Boleta, Cliente , despacho
+from .models import Carrito, CarritoVenta, Venta, Boleta, Cliente, despacho  # Asegúrate de que 'despacho' está en minúsculas
 
 class VentaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -10,6 +10,9 @@ class BoletaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Boleta
         fields = ['id', 'venta', 'cliente', 'fecha', 'cantidad', 'total']
+        extra_kwargs = {
+            'venta': {'required': False}  # Hacer que el campo 'venta' no sea obligatorio
+        }
 
 class ClienteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,7 +23,6 @@ class DespachoSerializer(serializers.ModelSerializer):
     class Meta:
         model = despacho
         fields = ('id', 'boleta', 'fecha', 'direccion', 'estado')
-
 
 class CarritoVentaSerializer(serializers.ModelSerializer):
     class Meta:

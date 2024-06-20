@@ -1,3 +1,4 @@
+from datetime import datetime
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
@@ -28,48 +29,81 @@ class VentaViewSet(viewsets.ModelViewSet):
         serializer = VentaSerializer(query, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['POST']) # sirve para crear una venta con boletas
+
+    @action(detail=False, methods=['post'])
     def create_venta_con_boletas(self, request):
-        venta_id = request.data.get('venta')        
-        venta = get_object_or_404(Venta, pk=venta_id)
-        boletas_data = request.data
-        boletas_data['venta_id'] = venta
-        boletas_serializer = BoletaSerializer(data=boletas_data)
-        if boletas_serializer.is_valid():
-            boletas_serializer.save()  
-            boletas_data = boletas_serializer.data  
-            precio_venta = venta.precio
-            anio_venta = venta.anio
-            return Response({
-                'precio_venta': precio_venta,
-                'anio_venta': anio_venta,
-                'boletas': boletas_data
-            }, status=status.HTTP_201_CREATED)
-        return Response(boletas_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+        cliente_id = request.data.get('cliente_id')
+        print(f'Cliente ID recibido: {cliente_id}')
+        cliente = get_object_or_404(Cliente, pk=cliente_id)
+
+        # Verificar si el cliente tiene un carrito
+        carrito = get_object_or_404(Carrito, cliente=cliente)
+        ventas_en_carrito = CarritoVenta.objects.filter(carrito=carrito)
+
+        if not ventas_en_carrito.exists():
+            return Response({'error': 'El carrito está vacío'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Obtener una de las ventas asociadas al carrito
+        # Aquí asumimos que solo hay una venta en el carrito o seleccionamos la primera
+        # Puedes ajustar esta lógica dependiendo de cómo estás manejando las ventas en el carrito
+        primera_venta = ventas_en_carrito.first().venta
+
+        # Crear la boleta
+        total = sum(item.cantidad * item.venta.precio for item in ventas_en_carrito)
+        boleta_data = {
+            'cliente': cliente.id,
+            'venta': primera_venta.id,  # Aquí asignamos la primera venta encontrada
+            'fecha': datetime.now(),
+            'cantidad': ventas_en_carrito.count(),
+            'total': total,
+        }
+        print(f'Datos de boleta: {boleta_data}')
+        boleta_serializer = BoletaSerializer(data=boleta_data)
+        if boleta_serializer.is_valid():
+            # Guardar la boleta
+            boleta = boleta_serializer.save()
+
+            # Asociar cada venta del carrito a la boleta
+            for item in ventas_en_carrito:
+                item.venta.boleta = boleta
+                item.venta.save()
+
+            # Vaciar el carrito
+            ventas_en_carrito.delete()
+
+            return Response(boleta_serializer.data, status=status.HTTP_201_CREATED)
+        
+        print(f'Errores de serialización: {boleta_serializer.errors}')
+        return Response(boleta_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     @action(detail=False, methods=['get']) # sirve para obtener las boletas con venta
     def obtener_boletas_con_venta(self, request):
-        boletas = Boleta.objects.select_related('venta', 'cliente').all()
+        boletas = Boleta.objects.select_related('cliente').all()
         data = []
         for boleta in boletas:
+            ventas = Venta.objects.filter(boleta=boleta)
+            ventas_data = [
+                {
+                    'id_venta': venta.id,
+                    'marca': venta.marca,
+                    'modelo': venta.modelo,
+                    'estado': venta.estado,
+                    'precio': venta.precio,
+                    'anio': venta.anio,
+                }
+                for venta in ventas
+            ]
             data.append({
                 'id_boleta': boleta.id,
                 'fecha': boleta.fecha,
                 'cantidad': boleta.cantidad,
                 'total': boleta.total,
-                'venta': {
-                    'id_venta': boleta.venta.id,
-                    'marca': boleta.venta.marca,
-                    'modelo': boleta.venta.modelo,
-                    'estado': boleta.venta.estado,
-                    'precio': boleta.venta.precio,
-                    'anio': boleta.venta.anio,
-                },
+                'ventas': ventas_data,
                 'cliente': {
                     'id_cliente': boleta.cliente.id if boleta.cliente else None,
                     'rut': boleta.cliente.rut if boleta.cliente else None,
-                    'nombre': boleta.cliente.nombre if boleta.cliente else None, 
-                    'apellido': boleta.cliente.apellido if boleta.cliente else None, 
+                    'nombre': boleta.cliente.nombre if boleta.cliente else None,
+                    'apellido': boleta.cliente.apellido if boleta.cliente else None,
                     'telefono': boleta.cliente.telefono if boleta.cliente else None,
                     'email': boleta.cliente.email if boleta.cliente else None,
                     'direccion': boleta.cliente.direccion if boleta.cliente else None
