@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Venta, Boleta, Cliente , despacho
+from .models import Carrito, CarritoVenta, Venta, Boleta, Cliente , despacho
 
 class VentaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,4 +20,6 @@ class DespachoSerializer(serializers.ModelSerializer):
     class Meta:
         model = despacho
         fields = ('id', 'boleta', 'fecha', 'direccion', 'estado')
+
+
     

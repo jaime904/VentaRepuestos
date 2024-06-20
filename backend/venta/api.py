@@ -2,8 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
-from .models import Cliente, Venta, Boleta , despacho
-from .serializers import ClienteSerializer, DespachoSerializer, VentaSerializer, BoletaSerializer
+from .models import Carrito, CarritoVenta, Cliente, Venta, Boleta , despacho
+from .serializers import ClienteSerializer, DespachoSerializer, VentaSerializer, BoletaSerializer , CarritoVentaSerializer, CarritoSerializer
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
@@ -126,3 +126,44 @@ class VentaViewSet(viewsets.ModelViewSet):
             return JsonResponse({"message": "Estado de venta cambiado a falso"})
         except Venta.DoesNotExist:
             return JsonResponse({"error": "La venta no existe"})
+
+
+    @action(detail=False, methods=['post'])  # Accion personalizada para agregar al carrito
+    def agregar_al_carrito(self, request):
+        cliente_id = request.data.get('cliente_id')
+        venta_id = request.data.get('venta_id')
+        cantidad = int(request.data.get('cantidad', 1))
+        cliente = get_object_or_404(Cliente, pk=cliente_id)
+        venta = get_object_or_404(Venta, pk=venta_id)
+        carrito, created = Carrito.objects.get_or_create(cliente=cliente)
+        carrito_venta, created = CarritoVenta.objects.get_or_create(carrito=carrito, venta=venta)
+        if not created:
+            carrito_venta.cantidad += cantidad
+        else:
+            carrito_venta.cantidad = cantidad
+        carrito_venta.save()
+        return Response({'status': 'success', 'message': 'Producto agregado al carrito'}, status=status.HTTP_200_OK)
+
+
+
+    @action(detail=False, methods=['get'])
+    def ver_carrito(self, request):
+        cliente_id = request.query_params.get('cliente_id')
+        if not cliente_id:
+            return Response({'error': 'Se requiere el parámetro cliente_id en la solicitud.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        cliente = get_object_or_404(Cliente, pk=cliente_id)
+        carrito = get_object_or_404(Carrito, cliente=cliente)
+        ventas_en_carrito = CarritoVenta.objects.filter(carrito=carrito)
+
+        carrito_data = []
+        for item in ventas_en_carrito:
+            carrito_data.append({
+                'venta_id': item.venta.id,
+                'marca': item.venta.marca,
+                'modelo': item.venta.modelo,
+                'cantidad': item.cantidad,
+                'precio': item.venta.precio,
+                'total': item.cantidad * item.venta.precio,
+            })
+        return Response({'carrito': carrito_data}, status=status.HTTP_200_OK)

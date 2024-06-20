@@ -53,4 +53,11 @@ class despacho(models.Model):
     estado = models.BooleanField(default=True)
 
 
+class Carrito(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
 
+class CarritoVenta(models.Model):
+    carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE)
+    venta = models.ForeignKey(Venta, on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField(default=1)

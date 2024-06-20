@@ -1,13 +1,13 @@
+# urls.py
+
 from rest_framework import routers
-from .api import VentaViewSet
+from .views import VentaViewSet
 
 router = routers.DefaultRouter()
-
-router.register('api/venta', VentaViewSet, 'venta')
-
-# Registra la acción personalizada obtener_boletas_con_venta
+router.register('api/venta', VentaViewSet, basename='venta')
 
 urlpatterns = router.urls
+
 #comenta para que sirve este codigo y que hace  
 #Este código define las rutas de la API de la aplicación Venta.
 #Se importa el módulo routers de rest_framework y la clase VentaViewSet del módulo api.
