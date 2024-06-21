@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Carrito, CarritoVenta, Venta, Boleta, Cliente, despacho  # Asegúrate de que 'despacho' está en minúsculas
+from .models import BoletaVenta, Carrito, CarritoVenta, Venta, Boleta, Cliente, despacho  # Asegúrate de que 'despacho' está en minúsculas
 
 class VentaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -7,12 +7,35 @@ class VentaSerializer(serializers.ModelSerializer):
         fields = ('id', 'marca', 'modelo', 'precio', 'anio', 'estado')
 
 class BoletaSerializer(serializers.ModelSerializer):
+    ventas = serializers.SerializerMethodField()
+
     class Meta:
         model = Boleta
-        fields = ['id', 'venta', 'cliente', 'fecha', 'cantidad', 'total']
-        extra_kwargs = {
-            'venta': {'required': False}  # Hacer que el campo 'venta' no sea obligatorio
-        }
+        fields = ['id', 'cliente', 'fecha', 'cantidad', 'total', 'ventas']
+
+    def get_ventas(self, obj):
+        boleta_ventas = BoletaVenta.objects.filter(boleta=obj)
+        return BoletaVentaSerializer(boleta_ventas, many=True).data
+
+    def create(self, validated_data):
+        # Crear la boleta
+        boleta = Boleta.objects.create(**validated_data)
+        
+        # Obtener ventas del carrito desde el contexto
+        ventas_en_carrito = self.context.get('ventas_en_carrito')
+        
+        # Crear las relaciones Boleta-Venta
+        for item in ventas_en_carrito:
+            BoletaVenta.objects.create(boleta=boleta, venta=item.venta)
+        
+        return boleta
+
+class BoletaVentaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BoletaVenta
+        fields = ['boleta', 'venta']
+
+
 
 class ClienteSerializer(serializers.ModelSerializer):
     class Meta:

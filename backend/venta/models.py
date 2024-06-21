@@ -28,13 +28,19 @@ class Cliente(models.Model):
     email = models.EmailField(max_length=50)
     direccion = models.CharField(max_length=50)
 
+
 class Boleta(models.Model):
-    id = models.AutoField(primary_key=True)
-    venta = models.ForeignKey(Venta, on_delete=models.CASCADE)
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, null=True, blank=True)
-    fecha = models.DateField(auto_now_add=True)
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    fecha = models.DateTimeField()
     cantidad = models.IntegerField()
-    total = models.IntegerField()
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    venta = models.ForeignKey(Venta, null=True, blank=True, on_delete=models.SET_NULL)  # Permitir valores nulos para venta
+
+
+class BoletaVenta(models.Model):
+    boleta = models.ForeignKey(Boleta, on_delete=models.CASCADE)
+    venta = models.ForeignKey(Venta, on_delete=models.CASCADE)
+
 
 class nota_credito(models.Model):   
     id = models.AutoField(primary_key=True)

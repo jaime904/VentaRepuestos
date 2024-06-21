@@ -3,8 +3,8 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.decorators import action
-from .models import Carrito, CarritoVenta, Cliente, Venta, Boleta , despacho
-from .serializers import ClienteSerializer, DespachoSerializer, VentaSerializer, BoletaSerializer , CarritoVentaSerializer, CarritoSerializer
+from .models import BoletaVenta, Carrito, CarritoVenta, Cliente, Venta, Boleta , despacho
+from .serializers import ClienteSerializer, DespachoSerializer, VentaSerializer, BoletaSerializer , CarritoVentaSerializer, CarritoSerializer , BoletaVentaSerializer
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
@@ -30,10 +30,10 @@ class VentaViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+
     @action(detail=False, methods=['post'])
     def create_venta_con_boletas(self, request):
         cliente_id = request.data.get('cliente_id')
-        print(f'Cliente ID recibido: {cliente_id}')
         cliente = get_object_or_404(Cliente, pk=cliente_id)
 
         # Verificar si el cliente tiene un carrito
@@ -43,47 +43,42 @@ class VentaViewSet(viewsets.ModelViewSet):
         if not ventas_en_carrito.exists():
             return Response({'error': 'El carrito está vacío'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Obtener una de las ventas asociadas al carrito
-        # Aquí asumimos que solo hay una venta en el carrito o seleccionamos la primera
-        # Puedes ajustar esta lógica dependiendo de cómo estás manejando las ventas en el carrito
-        primera_venta = ventas_en_carrito.first().venta
+        # Calcular el total de todas las ventas en el carrito
+        total = sum(item.cantidad * item.venta.precio for item in ventas_en_carrito)
+        cantidad_total = sum(item.cantidad for item in ventas_en_carrito)
 
         # Crear la boleta
-        total = sum(item.cantidad * item.venta.precio for item in ventas_en_carrito)
         boleta_data = {
             'cliente': cliente.id,
-            'venta': primera_venta.id,  # Aquí asignamos la primera venta encontrada
             'fecha': datetime.now(),
-            'cantidad': ventas_en_carrito.count(),
+            'cantidad': cantidad_total,
             'total': total,
         }
-        print(f'Datos de boleta: {boleta_data}')
         boleta_serializer = BoletaSerializer(data=boleta_data)
         if boleta_serializer.is_valid():
-            # Guardar la boleta
             boleta = boleta_serializer.save()
 
             # Asociar cada venta del carrito a la boleta
             for item in ventas_en_carrito:
-                item.venta.boleta = boleta
-                item.venta.save()
+                boleta_venta = BoletaVenta.objects.create(boleta=boleta, venta=item.venta)
 
             # Vaciar el carrito
             ventas_en_carrito.delete()
 
             return Response(boleta_serializer.data, status=status.HTTP_201_CREATED)
-        
-        print(f'Errores de serialización: {boleta_serializer.errors}')
+
         return Response(boleta_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['get']) # sirve para obtener las boletas con venta
+    @action(detail=False, methods=['get'])
     def obtener_boletas_con_venta(self, request):
-        boletas = Boleta.objects.select_related('cliente').all()
+        boletas = Boleta.objects.select_related('cliente').prefetch_related('boletaventa_set__venta').all()
+
         data = []
         for boleta in boletas:
-            ventas = Venta.objects.filter(boleta=boleta)
-            ventas_data = [
-                {
+            ventas_data = []
+            for boleta_venta in boleta.boletaventa_set.all():
+                venta = boleta_venta.venta
+                venta_info = {
                     'id_venta': venta.id,
                     'marca': venta.marca,
                     'modelo': venta.modelo,
@@ -91,9 +86,9 @@ class VentaViewSet(viewsets.ModelViewSet):
                     'precio': venta.precio,
                     'anio': venta.anio,
                 }
-                for venta in ventas
-            ]
-            data.append({
+                ventas_data.append(venta_info)
+
+            boleta_info = {
                 'id_boleta': boleta.id,
                 'fecha': boleta.fecha,
                 'cantidad': boleta.cantidad,
@@ -108,8 +103,10 @@ class VentaViewSet(viewsets.ModelViewSet):
                     'email': boleta.cliente.email if boleta.cliente else None,
                     'direccion': boleta.cliente.direccion if boleta.cliente else None
                 }
-            })
-        return JsonResponse(data, safe=False)
+            }
+            data.append(boleta_info)
+
+        return Response(data)
 
     @action(detail=True, methods=['put', 'patch'])
     def actualizar_venta(self, request, pk=None): # sirve para modificar una venta
