@@ -34,6 +34,7 @@ class VentaViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def create_venta_con_boletas(self, request):
         cliente_id = request.data.get('cliente_id')
+        print(f'Cliente ID recibido: {cliente_id}')
         cliente = get_object_or_404(Cliente, pk=cliente_id)
 
         # Verificar si el cliente tiene un carrito
@@ -46,7 +47,7 @@ class VentaViewSet(viewsets.ModelViewSet):
         # Calcular el total de todas las ventas en el carrito
         total = sum(item.cantidad * item.venta.precio for item in ventas_en_carrito)
         cantidad_total = sum(item.cantidad for item in ventas_en_carrito)
-
+        
         # Crear la boleta
         boleta_data = {
             'cliente': cliente.id,
@@ -54,21 +55,20 @@ class VentaViewSet(viewsets.ModelViewSet):
             'cantidad': cantidad_total,
             'total': total,
         }
-        boleta_serializer = BoletaSerializer(data=boleta_data)
+        print(f'Datos de boleta: {boleta_data}')
+        boleta_serializer = BoletaSerializer(data=boleta_data, context={'ventas_en_carrito': ventas_en_carrito})
         if boleta_serializer.is_valid():
+            # Guardar la boleta
             boleta = boleta_serializer.save()
-
-            # Asociar cada venta del carrito a la boleta
-            for item in ventas_en_carrito:
-                boleta_venta = BoletaVenta.objects.create(boleta=boleta, venta=item.venta)
 
             # Vaciar el carrito
             ventas_en_carrito.delete()
 
             return Response(boleta_serializer.data, status=status.HTTP_201_CREATED)
-
+        
+        print(f'Errores de serialización: {boleta_serializer.errors}')
         return Response(boleta_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    
     @action(detail=False, methods=['get'])
     def obtener_boletas_con_venta(self, request):
         boletas = Boleta.objects.select_related('cliente').prefetch_related('boletaventa_set__venta').all()
