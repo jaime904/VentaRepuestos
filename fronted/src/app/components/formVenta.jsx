@@ -20,7 +20,7 @@ function formuVenta ()
             anio: anio
         };
         
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/venta/`,{	
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/venta/`,{	
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
