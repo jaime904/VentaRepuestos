@@ -7,7 +7,7 @@ export async function CargarVenta ()
     return data;
 }
 
-export async function ListarVenta () //comentario de prueba
+export async function ListarVenta () //comentario de prueba2
 {
     const date = await CargarVenta();
     console.log(date);
